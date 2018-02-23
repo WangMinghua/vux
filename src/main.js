@@ -1,24 +1,49 @@
+import objectAssign from 'object-assign'
+
 import Vue from 'vue'
+
+import App from './App'
+
+import Vuex from 'vuex'
+import vuexI18n from 'vuex-i18n'
 import VueRouter from 'vue-router'
 import { sync } from 'vuex-router-sync'
 
 Vue.use(VueRouter)
-import App from './App'
-import Vuex from 'vuex'
 Vue.use(Vuex)
-
-import vuexI18n from 'vuex-i18n'
 
 require('es6-promise').polyfill()
 
-/**
-* you can add your module here
-*/
+/** i18n **/
 let store = new Vuex.Store({
   modules: {
     i18n: vuexI18n.store
   }
 })
+
+Vue.use(vuexI18n.plugin, store)
+
+const vuxLocales = require('json-loader!yaml-loader!./locales/all.yml')
+const componentsLocales = require('json-loader!yaml-loader!./locales/components.yml')
+
+const finalLocales = {
+  'en': objectAssign(vuxLocales['en'], componentsLocales['en']),
+  'zh-CN': objectAssign(vuxLocales['zh-CN'], componentsLocales['zh-CN'])
+}
+
+for (let i in finalLocales) {
+  Vue.i18n.add(i, finalLocales[i])
+}
+
+import { DatetimePlugin, CloseDialogsPlugin, ConfigPlugin, BusPlugin, LocalePlugin, DevicePlugin, ToastPlugin, AlertPlugin, ConfirmPlugin, LoadingPlugin, WechatPlugin, AjaxPlugin, AppPlugin } from 'vux'
+
+Vue.use(LocalePlugin)
+const nowLocale = Vue.locale.get()
+if (/zh/.test(nowLocale)) {
+  Vue.i18n.set('zh-CN')
+} else {
+  Vue.i18n.set('en')
+}
 
 store.registerModule('vux', {
   state: {
@@ -44,11 +69,12 @@ store.registerModule('vux', {
   }
 })
 
-Vue.use(vuexI18n.plugin, store)
+// global VUX config
+Vue.use(ConfigPlugin, {
+  $layout: 'VIEW_BOX' // global config for VUX, since v2.5.12
+})
 
 // plugins
-import { DatetimePlugin, LocalePlugin, DevicePlugin, ToastPlugin, AlertPlugin, ConfirmPlugin, LoadingPlugin, WechatPlugin, AjaxPlugin, AppPlugin } from 'vux'
-
 Vue.use(DevicePlugin)
 Vue.use(ToastPlugin)
 Vue.use(AlertPlugin)
@@ -56,7 +82,7 @@ Vue.use(ConfirmPlugin)
 Vue.use(LoadingPlugin)
 Vue.use(WechatPlugin)
 Vue.use(AjaxPlugin)
-Vue.use(LocalePlugin)
+Vue.use(BusPlugin)
 Vue.use(DatetimePlugin)
 
 // test
@@ -97,28 +123,6 @@ if (process.env.NODE_ENV === 'production') {
   })
 }
 
-import objectAssign from 'object-assign'
-
-const vuxLocales = require('json-loader!yaml-loader!vux/src/locales/all.yml')
-const componentsLocales = require('json-loader!yaml-loader!src/locales/components.yml')
-const globalLocales = require('json-loader!yaml-loader!src/locales/global_locales.yml') || {en: {}, 'zh-CN': {}}
-
-const finalLocales = {
-  'en': objectAssign(vuxLocales['en'], componentsLocales['en'], globalLocales['en']),
-  'zh-CN': objectAssign(vuxLocales['zh-CN'], componentsLocales['zh-CN'], globalLocales['zh-CN'])
-}
-
-for (let i in finalLocales) {
-  Vue.i18n.add(i, finalLocales[i])
-}
-
-const nowLocale = Vue.locale.get()
-if (/zh/.test(nowLocale)) {
-  Vue.i18n.set('zh-CN')
-} else {
-  Vue.i18n.set('en')
-}
-
 const FastClick = require('fastclick')
 FastClick.attach(document.body)
 
@@ -129,6 +133,8 @@ const router = new VueRouter({
   routes
 })
 
+Vue.use(CloseDialogsPlugin, router)
+
 sync(store, router)
 
 // simple history management
@@ -136,6 +142,20 @@ const history = window.sessionStorage
 history.clear()
 let historyCount = history.getItem('count') * 1 || 0
 history.setItem('/', 0)
+let isPush = false
+let endTime = Date.now()
+let methods = ['push', 'go', 'replace', 'forward', 'back']
+
+document.addEventListener('touchend', () => {
+  endTime = Date.now()
+})
+methods.forEach(key => {
+  let method = router[key].bind(router)
+  router[key] = function (...args) {
+    isPush = true
+    method.apply(null, args)
+  }
+})
 
 router.beforeEach(function (to, from, next) {
   store.commit('updateLoadingStatus', {isLoading: true})
@@ -147,7 +167,12 @@ router.beforeEach(function (to, from, next) {
     if (!fromIndex || parseInt(toIndex, 10) > parseInt(fromIndex, 10) || (toIndex === '0' && fromIndex === '0')) {
       store.commit('updateDirection', {direction: 'forward'})
     } else {
-      store.commit('updateDirection', {direction: 'reverse'})
+      // 判断是否是ios左滑返回
+      if (!isPush && (Date.now() - endTime) < 377) {
+        store.commit('updateDirection', {direction: ''})
+      } else {
+        store.commit('updateDirection', { direction: 'reverse' })
+      }
     }
   } else {
     ++historyCount
@@ -165,6 +190,7 @@ router.beforeEach(function (to, from, next) {
 })
 
 router.afterEach(function (to) {
+  isPush = false
   store.commit('updateLoadingStatus', {isLoading: false})
   if (process.env.NODE_ENV === 'production') {
     ga && ga('set', 'page', to.fullPath)

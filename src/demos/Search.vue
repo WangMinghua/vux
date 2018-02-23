@@ -12,6 +12,10 @@
     @on-cancel="onCancel"
     @on-submit="onSubmit"
     ref="search"></search>
+    <group>
+      <cell title="keyword">{{value}}</cell>
+    </group>
+
     <div style="padding:15px;">
       <x-button @click.native="setFocus" type="primary">set focus</x-button>
     </div>
@@ -39,6 +43,7 @@ export default {
       window.alert('you click the result item: ' + JSON.stringify(item))
     },
     getResult (val) {
+      console.log('on-change', val)
       this.results = val ? getResult(this.value) : []
     },
     onSubmit () {

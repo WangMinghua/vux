@@ -91,7 +91,7 @@ Vux（读音 [v'ju:z]，同`views`）是基于`WeUI`和`Vue`(2.x)开发的移动
 
 > 如果你的产品在使用`VUX`, 欢迎邮箱发送`Logo+链接`给我（统一格式：二维码必须无白边框）。
 
-<img src="https://static.vux.li/showcase/ssy.png" width="150">
+<img src="https://i.loli.net/2018/01/05/5a4f263859763.jpg" width="150">
 <img src="https://static.vux.li/showcase/jkda51.png?v2" width="150">
 <img src="https://static.vux.li/showcase/voez.png?v2" width="150">
 <img src="https://static.vux.li/showcase/xmb.png?v2" width="150">
@@ -102,6 +102,8 @@ Vux（读音 [v'ju:z]，同`views`）是基于`WeUI`和`Vue`(2.x)开发的移动
 <img src="https://static.vux.li/showcase/ljwk.jpg" width="150">
 <img src="https://static.vux.li/showcase/bianjibang.jpg" width="150">
 <img src="https://static.vux.li/showcase/timemgt.jpg" width="150">
+<img src="https://i.loli.net/2018/01/17/5a5f11ed95864.jpg" width="150">
+<img src="https://i.loli.net/2018/01/17/5a5f1103c98e7.jpg" width="150">
 
 ## 安装使用(webpack)
 
@@ -230,15 +232,22 @@ Vue.use(ToastPlugin)
   </style>
   ```
 
-- 配置vue-loader（通过配置vux-loader实现）
+- 配置 vux-loader
+
+  请在`build/webpack.base.conf.js`里参照如下代码进行配置：
+
+  <p class="warning">注意：请把 resolve 里的 symlink 设为 `true` 如果你是使用 cnpm 进行依赖安装 </p>
 
   ``` js
-  // vux-loader
-  plugins: [{
-    name: 'vux-ui'
-  }]
+  const vuxLoader = require('vux-loader')
+  const webpackConfig = originalConfig // 原来的 module.exports 代码赋值给变量 webpackConfig
+
+  module.exports = vuxLoader.merge(webpackConfig, {
+    plugins: ['vux-ui']
+  })
   ```
-- 配置babel-loader以正确编译Vux的js源码（通过配置vux-loader实现）
+
+- 配置babel-loader以正确编译 VUX 的js源码（通过配置vux-loader实现）
 
   ``` js
   plugins: [{
@@ -378,6 +387,10 @@ router.afterEach(function (to) {
 该插件提供了`commonJS`的引入方式。
 
 <p class="warning">
+  插件仅仅为了使用方便做了封装，任何 jssdk 相关的测试问题都和 VUX 无关，请参考微信官方文档，不要提 issue，更不要以为是 VUX 导致的问题。
+</p>
+
+<p class="warning">
   分享接口只有认证公众号才能使用，域名必须备案且在微信后台设置。
   <br>
   先确认已经满足使用`jssdk`的要求再进行编码。
@@ -483,6 +496,16 @@ export default {
 }
 ```
 
+<p class="warning">
+请特别注意不要忘了把 `store` 挂载到 Vue 实例上。
+</p>
+
+```js
+new Vue({
+  store,
+  router,
+```
+
 done.
 
 如果你觉得在加载比较快时`Loading`组件一闪而过体验也不大好，那么你可以延迟设置`loading=false`。
@@ -543,7 +566,7 @@ FastClick.attach(document.body)
 
 ### 微信webview常见问题
 
-<h4>iOS title 设置无效</h4>
+<h4>iOS title 设置无效(该问题在微信版本6.5.x某个版本中已被修复)</h4>
 
 在微信`iOS` `webview`更新到`WKWebView`之前我们可以通过加载一个`iframe`来实现单页面应用`title`更改。但是17年初更新到`WKWebView`后该方法也失效，据`对开发者十分特别不友好的把所有文档放在同一个页面不能通过url区分甚至连锚点也懒得做的`的`微信开发文档`([链接](https://mp.weixin.qq.com/wiki))说，`3月份会修复`。
 
@@ -960,3 +983,4 @@ changes:
 + [lichunqiang](https://github.com/lichunqiang)
 + [graysheeep](https://github.com/graysheeep)
 + [unclay](https://github.com/unclay)
++ [wg5945](https://github.com/wg5945)

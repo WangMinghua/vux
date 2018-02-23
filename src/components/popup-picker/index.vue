@@ -3,16 +3,16 @@
     <div class="weui-cell vux-tap-active weui-cell_access" @click="onClick" v-show="showCell">
       <div class="weui-cell__hd">
         <slot name="title" label-class="weui-label" :label-style="labelStyles" :label-title="title">
-          <label class="weui-label" :style="labelStyles" v-if="title" v-html="title"></label>
+          <label class="weui-label" :class="labelClass" :style="labelStyles" v-if="title" v-html="title"></label>
         </slot>
         <inline-desc v-if="inlineDesc">{{ inlineDesc }}</inline-desc>
       </div>
       <div class="vux-cell-primary vux-popup-picker-select-box">
         <div class="vux-popup-picker-select" :style="{textAlign: valueTextAlign}">
-          <span class="vux-popup-picker-value" v-if="!displayFormat && !showName && value.length">{{value | array2string}}</span>
-          <span class="vux-popup-picker-value" v-if="!displayFormat && showName && value.length">{{value | value2name(data)}}</span>
-          <span class="vux-popup-picker-value" v-if="displayFormat && value.length">{{ displayFormat(value, value2name(value, data)) }}</span>
-          <span v-if="!value.length && placeholder" v-text="placeholder" class="vux-popup-picker-placeholder"></span>
+          <span class="vux-popup-picker-value vux-cell-value" v-if="!displayFormat && !showName && value.length">{{value | array2string}}</span>
+          <span class="vux-popup-picker-value vux-cell-value" v-if="!displayFormat && showName && value.length">{{value | value2name(data)}}</span>
+          <span class="vux-popup-picker-value vux-cell-value" v-if="displayFormat && value.length">{{ displayFormat(value, value2name(value, data)) }}</span>
+          <span v-if="!value.length && placeholder" v-text="placeholder" class="vux-popup-picker-placeholder vux-cell-placeholder"></span>
         </div>
       </div>
       <div class="weui-cell__ft">
@@ -25,14 +25,15 @@
       class="vux-popup-picker"
       :id="`vux-popup-picker-${uuid}`"
       @on-hide="onPopupHide"
-      @on-show="onPopupShow">
+      @on-show="onPopupShow"
+      :popup-style="popupStyle">
         <div class="vux-popup-picker-container">
-          <div class="vux-popup-picker-header" @touchmove.prevent>
-            <flexbox>
-              <flexbox-item class="vux-popup-picker-header-menu vux-popup-picker-cancel" @click.native="onHide(false)">{{ cancelText || $t('cancel_text') }}</flexbox-item>
-              <flexbox-item class="vux-popup-picker-header-menu vux-popup-picker-header-menu-right" @click.native="onHide(true)">{{ confirmText || $t('confirm_text') }}</flexbox-item>
-            </flexbox>
-          </div>
+          <popup-header
+          :left-text="cancelText || $t('cancel_text')"
+          :right-text="confirmText || $t('confirm_text')"
+          @on-click-left="onHide(false)"
+          @on-click-right="onHide(true)"
+          :title="popupTitle"></popup-header>
           <picker
           :data="data"
           v-model="tempValue"
@@ -61,6 +62,7 @@ confirm_text:
 import Picker from '../picker'
 import Cell from '../cell'
 import Popup from '../popup'
+import PopupHeader from '../popup-header'
 import InlineDesc from '../inline-desc'
 import { Flexbox, FlexboxItem } from '../flexbox'
 import array2string from '../../filters/array2String'
@@ -87,6 +89,7 @@ export default {
     Picker,
     Cell,
     Popup,
+    PopupHeader,
     Flexbox,
     FlexboxItem,
     InlineDesc
@@ -136,15 +139,22 @@ export default {
       type: Boolean,
       default: true
     },
-    columnWidth: Array
+    columnWidth: Array,
+    popupStyle: Object,
+    popupTitle: String
   },
   computed: {
     labelStyles () {
       return {
         display: 'block',
-        width: this.$parent.labelWidth || this.$parent.$parent.labelWidth,
+        width: this.$parent.labelWidth || this.$parent.$parent.labelWidth || 'auto',
         textAlign: this.$parent.labelAlign || this.$parent.$parent.labelAlign,
         marginRight: this.$parent.labelMarginRight || this.$parent.$parent.labelMarginRight
+      }
+    },
+    labelClass () {
+      return {
+        'vux-cell-justify': this.$parent.labelAlign === 'justify' || this.$parent.$parent.labelAlign === 'justify'
       }
     }
   },
@@ -193,21 +203,26 @@ export default {
           // if set to auto update, do update the value
         }
       }
-      this.$emit('on-shadow-change', getObject(val))
+      const _val = getObject(val)
+      this.$emit('on-shadow-change', _val, value2name(_val, this.data).split(' '))
     }
   },
   watch: {
     value (val) {
       if (JSON.stringify(val) !== JSON.stringify(this.tempValue)) {
         this.tempValue = getObject(val)
+        this.currentValue = getObject(val)
       }
     },
     currentValue (val) {
-      this.$emit('on-change', getObject(val))
       this.$emit('input', getObject(val))
+      this.$emit('on-change', getObject(val))
     },
     show (val) {
       this.showValue = val
+    },
+    showValue (val) {
+      this.$emit('update:show', val)
     }
   },
   data () {
@@ -233,10 +248,9 @@ export default {
 .vux-cell-box {
   position: relative;
 }
-.vux-cell-box:before {
+.vux-cell-box:not(:first-child):before {
   content: " ";
   position: absolute;
-  left: 0;
   top: 0;
   width: 100%;
   height: 1px;

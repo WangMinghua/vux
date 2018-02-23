@@ -1,10 +1,13 @@
 import Datetime from '../../components/datetime/datetimepicker'
 import ObjectAssign from 'object-assign'
+/* just for importing style and avoid less-loader issue */
+import DatetimeComponent from '../../components/datetime/index.vue' // eslint-disable-line
 
 const libs = {
   show: function (options = {}) {
     options = ObjectAssign({
-      destroyOnHide: true
+      destroyOnHide: true,
+      isOneInstance: true
     }, options)
     const datetime = libs.datetime = new Datetime(options)
     datetime.show()

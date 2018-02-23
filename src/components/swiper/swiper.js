@@ -1,5 +1,5 @@
-import arrayFrom from 'array-from'
 import objectAssign from 'object-assign'
+const arrayFrom = (nodeList) => Array.prototype.slice.call(nodeList)
 
 class Swiper {
   constructor (options) {
@@ -147,6 +147,9 @@ class Swiper {
       me._setTransition('none')
     }
     me.touchmoveHandler = (e) => {
+      if (me.count === 1) {
+        return
+      }
       me._move.x = e.changedTouches[0].pageX
       me._move.y = e.changedTouches[0].pageY
       let distanceX = me._move.x - me._start.x
@@ -156,6 +159,10 @@ class Swiper {
       if (me._options.direction === 'horizontal' && noScrollerY) {
         distance = distanceX
       }
+      /* set shorter distance for first and last item for better experience */
+      if (!this._options.loop && (this._current === this.count - 1 || this._current === 0)) {
+        distance = distance / 3
+      }
       if (((me._options.minMovingDistance && Math.abs(distance) >= me._options.minMovingDistance) || !me._options.minMovingDistance) && noScrollerY) {
         me._setTransform(distance)
       }
@@ -164,6 +171,9 @@ class Swiper {
     }
 
     me.touchendHandler = (e) => {
+      if (me.count === 1) {
+        return
+      }
       me._end.x = e.changedTouches[0].pageX
       me._end.y = e.changedTouches[0].pageY
 

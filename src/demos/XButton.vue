@@ -1,5 +1,13 @@
 <template>
   <div>
+    <divider>iOS Gradients(v2.7.4)</divider>
+    <box gap="10px 10px">
+      <x-button :gradients="['#1D62F0', '#19D5FD']">iOS Gradients</x-button>
+      <x-button :gradients="['#A644FF', '#FC5BC4']">iOS Gradients</x-button>
+      <x-button :gradients="['#FF2719', '#FF61AD']">iOS Gradients</x-button>
+      <x-button :gradients="['#6F1BFE', '#9479DF']">iOS Gradients</x-button>
+      <x-button :gradients="['#FF5E3A', '#FF9500']">iOS Gradients</x-button>
+    </box>
     <divider>default</divider>
     <box gap="10px 10px">
       <x-button>submit</x-button>
@@ -39,6 +47,13 @@
       <x-button disabled>disable submit</x-button>
       <x-button type="primary" disabled>disable primary</x-button>
       <x-button type="warn" disabled>disable Delete</x-button>
+
+      <x-button mini disabled>disable mini submit</x-button>
+      <x-button mini type="primary" disabled>disable mini primary</x-button>
+      <x-button mini type="warn" disabled>disable mini Delete</x-button>
+
+      <x-button plain disabled>disable plain</x-button>
+      <x-button plain type="primary" disabled>disable plain primary</x-button>
 
       <divider>use :text and :disabled</divider>
       <x-button :text="submit001" :disabled="disable001" @click.native="processButton001" type="primary"></x-button>

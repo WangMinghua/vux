@@ -5,7 +5,7 @@
     </group>
 
     <group>
-      <popup-radio title="options" :options="options2" v-model="option2"></popup-radio>
+      <popup-radio title="options" :options="options2" v-model="option2" placeholder="placeholder"></popup-radio>
     </group>
 
     <group>
@@ -22,7 +22,7 @@
 
     <group>
       <popup-radio title="slot:each-item" :options="options3" v-model="option5">
-        <template scope="props" slot="each-item">
+        <template slot-scope="props" slot="each-item"><!-- use scope="props" when vue < 2.5.0 -->
           <p>
             custom item <img src="http://dn-placeholder.qbox.me/110x110/FF2D55/000" class="vux-radio-icon"> {{ props.label }}
             <br>

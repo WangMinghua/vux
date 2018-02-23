@@ -34,7 +34,7 @@
 
       <!-- main content -->
       <view-box ref="viewBox" body-padding-top="46px" body-padding-bottom="55px">
-        
+
         <x-header slot="header"
         style="width:100%;position:absolute;left:0;top:0;z-index:100;"
         :left-options="leftOptions"
@@ -47,7 +47,10 @@
           </span>
         </x-header>
 
-        <transition :name="'vux-pop-' + (direction === 'forward' ? 'in' : 'out')">
+        <!-- remember to import BusPlugin in main.js if you use components: x-img and sticky -->
+        <transition
+        @after-enter="$vux.bus && $vux.bus.$emit('vux:after-view-enter')"
+        :name="viewTransition" :css="!!direction">
           <router-view class="router-view"></router-view>
         </transition>
 
@@ -59,10 +62,6 @@
           <tabbar-item :link="{path:'/demo'}" :selected="isDemo" badge="9">
             <span class="demo-icon-22" slot="icon">&#xe633;</span>
             <span slot="label"><span v-if="componentName" class="vux-demo-tabbar-component">{{componentName}}</span><span v-else>Demos</span></span>
-          </tabbar-item>
-          <tabbar-item :link="{path:'/project/donate'}" :selected="route.path === '/project/donate'" show-dot>
-            <span class="demo-icon-22" slot="icon">&#xe630;</span>
-            <span slot="label">Donate</span>
           </tabbar-item>
         </tabbar>
 
@@ -176,6 +175,7 @@ export default {
       }
     },
     headerTransition () {
+      if (!this.direction) return ''
       return this.direction === 'forward' ? 'vux-header-fade-in-right' : 'vux-header-fade-in-left'
     },
     componentName () {
@@ -195,6 +195,10 @@ export default {
       if (this.route.path === '/project/donate') return 'Donate'
       if (this.route.path === '/demo') return 'Demo list'
       return this.componentName ? `Demo/${this.componentName}` : 'Demo/~~'
+    },
+    viewTransition () {
+      if (!this.direction) return ''
+      return 'vux-pop-' + (this.direction === 'forward' ? 'in' : 'out')
     }
   },
   data () {

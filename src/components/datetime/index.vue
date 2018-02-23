@@ -8,12 +8,20 @@
     <slot>
       <div>
         <slot name="title">
-          <p :style="{width: $parent.labelWidth, textAlign: $parent.labelAlign, marginRight: $parent.labelMarginRight}" v-html="title"></p>
+          <p
+          :style="{
+            width: $parent.labelWidth,
+            textAlign: $parent.labelAlign,
+            marginRight: $parent.labelMarginRight
+          }"
+          :class="labelClass"
+          v-html="title"></p>
         </slot>
-        <inline-desc v-if="inlineDesc">{{inlineDesc}}</inline-desc>
+        <inline-desc v-if="inlineDesc">{{ inlineDesc }}</inline-desc>
       </div>
       <div class="weui-cell__ft vux-cell-primary vux-datetime-value" :style="{textAlign: valueTextAlign}">
-        {{ _value }}
+        <span class="vux-cell-placeholder" v-if="!currentValue && placeholder">{{ placeholder }}</span>
+        <span class="vux-cell-value" v-if="currentValue">{{ displayFormat ? displayFormat(currentValue) : currentValue }}</span>
         <icon class="vux-input-icon" type="warn" v-show="!valid" :title="firstError"></icon>
       </div>
     </slot>
@@ -94,15 +102,35 @@ export default {
       type: Number,
       default: 23
     },
-    startDate: String,
-    endDate: String,
+    startDate: {
+      type: String,
+      validator (val) {
+        /* istanbul ignore if */
+        if (process.env.NODE_ENV === 'development' && val && val.length !== 10) {
+          console.error('[VUX] Datetime prop:start-date 必须为 YYYY-MM-DD 格式')
+        }
+        return val ? val.length === 10 : true
+      }
+    },
+    endDate: {
+      type: String,
+      validator (val) {
+        /* istanbul ignore if */
+        if (process.env.NODE_ENV === 'development' && val && val.length !== 10) {
+          console.error('[VUX] Datetime prop:end-date 必须为 YYYY-MM-DD 格式')
+        }
+        return val ? val.length === 10 : true
+      }
+    },
     valueTextAlign: String,
     displayFormat: Function,
     readonly: Boolean,
     hourList: Array,
     minuteList: Array,
     show: Boolean,
-    defaultSelectedValue: String
+    defaultSelectedValue: String,
+    computeHoursFunction: Function,
+    computeDaysFunction: Function
   },
   created () {
     this.isFirstSetValue = false
@@ -110,6 +138,7 @@ export default {
   },
   data () {
     return {
+      currentShow: false,
       currentValue: null,
       valid: true,
       errors: {}
@@ -121,17 +150,16 @@ export default {
     if (!this.readonly) {
       this.$nextTick(() => {
         this.render()
+
+        if (this.show) {
+          this.$nextTick(() => {
+            this.picker && this.picker.show(this.currentValue)
+          })
+        }
       })
     }
   },
   computed: {
-    _value () {
-      if (!this.currentValue) {
-        return this.placeholder || ''
-      } else {
-        return this.displayFormat ? this.displayFormat(this.currentValue) : this.currentValue
-      }
-    },
     pickerOptions () {
       const _this = this
       const options = {
@@ -154,6 +182,8 @@ export default {
         hourList: this.hourList,
         minuteList: this.minuteList,
         defaultSelectedValue: this.defaultSelectedValue,
+        computeHoursFunction: this.computeHoursFunction,
+        computeDaysFunction: this.computeDaysFunction,
         onSelect (type, val, wholeValue) {
           if (_this.picker && _this.picker.config.renderInline) {
             _this.$emit('input', wholeValue)
@@ -166,12 +196,20 @@ export default {
         onClear (value) {
           _this.$emit('on-clear', value)
         },
-        onHide () {
+        onHide (type) {
+          _this.currentShow = false
           _this.$emit('update:show', false)
           _this.validate()
-          _this.$emit('on-hide')
+          _this.$emit('on-hide', type)
+          if (type === 'cancel') {
+            _this.$emit('on-cancel')
+          }
+          if (type === 'confirm') {
+            _this.$emit('on-confirm')
+          }
         },
         onShow () {
+          _this.currentShow = true
           _this.$emit('update:show', true)
           _this.$emit('on-show')
         }
@@ -187,6 +225,11 @@ export default {
     firstError () {
       let key = Object.keys(this.errors)[0]
       return this.errors[key]
+    },
+    labelClass () {
+      return {
+        'vux-cell-justify': this.$parent.labelAlign === 'justify' || this.$parent.$parent.labelAlign === 'justify'
+      }
     }
   },
   methods: {
@@ -223,8 +266,11 @@ export default {
       }
     },
     show (val) {
+      if (val === this.currentShow) return
       if (val) {
         this.picker && this.picker.show(this.currentValue)
+      } else {
+        this.picker && this.picker.hide(this.currentValue)
       }
     },
     currentValue (val, oldVal) {
@@ -251,7 +297,7 @@ export default {
     },
     value (val) {
       // do not force render when renderInline is true
-      if (this.picker && this.picker.config.renderInline) {
+      if (this.readonly || (this.picker && this.picker.config.renderInline)) {
         this.currentValue = val
         return
       }
@@ -268,157 +314,5 @@ export default {
 </script>
 
 <style lang="less">
-@import '../../styles/variable.less';
-
-.dp-container {
-  &.vux-datetime-view {
-    position: static;
-    transition: none;
-    & .dp-header {
-      display: none;
-    }
-  }
-}
-
-.vux-datetime-clear {
-  text-align: center;
-}
-
-.scroller-component {
-  display: block;
-  position: relative;
-  height: 238px;
-  overflow: hidden;
-  width: 100%;
-}
-
-.scroller-content {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  z-index: -1;
-}
-
-.scroller-mask {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  margin: 0 auto;
-  width: 100%;
-  z-index: 3;
-  background-image:
-    linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.6)),
-    linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.6));
-  background-position: top, bottom;
-  background-size: 100% 102px;
-  background-repeat: no-repeat;
-}
-
-.scroller-item {
-  text-align: center;
-  font-size: 16px;
-  height: 34px;
-  line-height: 34px;
-  color: #000;
-}
-
-.scroller-indicator {
-  width: 100%;
-  height: 34px;
-  position: absolute;
-  left: 0;
-  top: 102px;
-  z-index: 3;
-  background-image:
-    linear-gradient(to bottom, #d0d0d0, #d0d0d0, transparent, transparent),
-    linear-gradient(to top, #d0d0d0, #d0d0d0, transparent, transparent);
-  background-position: top, bottom;
-  background-size: 100% 1px;
-  background-repeat: no-repeat;
-}
-
-.dp-container {
-  position: fixed;
-  width: 100%;
-  left: 0;
-  bottom: 0;
-  z-index: 10000;
-  background-color: #fff;
-  display: none;
-  transition: transform 0.3s ease;
-  transform: translateY(100%);
-}
-
-.dp-mask {
-  z-index: 998;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  left: 0px;
-  top: 0px;
-  opacity: 0;
-  transition: opacity 0.1s ease;
-  background-color: #000;
-  z-index: 9999;
-}
-
-.dp-header {
-  display: flex;
-  width: 100%;
-  box-align: center;
-  align-items: center;
-  background-image: linear-gradient(to bottom, #e7e7e7, #e7e7e7, transparent, transparent);
-  background-position: bottom;
-  background-size: 100% 1px;
-  background-repeat: no-repeat;
-}
-
-.dp-header .dp-item {
-  color: @datetime-header-item-font-color;
-  font-size: 16px;
-  height: 44px;
-  line-height: 44px;
-  cursor: pointer;
-}
-
-.dp-header .dp-item.dp-left {
-  color: @datetime-header-item-cancel-font-color;
-}
-
-.dp-header .dp-item.dp-right {
-  color: @datetime-header-item-confirm-font-color;
-}
-
-.dp-content {
-  display: flex;
-  width: 100%;
-  box-align: center;
-  align-items: center;
-  padding: 10px 0;
-}
-
-.dp-header .dp-item,
-.dp-content .dp-item {
-  box-sizing: border-box;
-  flex: 1;
-}
-.vux-datetime-cancel {
-  text-align: left;
-  padding-left: 15px;
-}
-.vux-datetime-confirm {
-  text-align: right;
-  padding-right: 15px;
-}
-.vux-datetime {
-  color: #000;
-}
-.vux-datetime .vux-input-icon {
-  float: right;
-}
-.vux-cell-primary {
-  flex: 1;
-}
+@import './style.less';
 </style>

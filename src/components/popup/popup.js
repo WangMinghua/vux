@@ -1,6 +1,15 @@
+const passiveSupported = require('../../libs/passive_supported')
+const isBrowser = typeof window === 'object'
+
 // not a good way but works well
-window.__$vuxPopups = window.__$vuxPopups || {}
+if (isBrowser) {
+  window.__$vuxPopups = window.__$vuxPopups || {}
+}
+
 const popupDialog = function (option) {
+  if (!isBrowser) {
+    return
+  }
   this.uuid = Math.random().toString(36).substring(3, 8)
   this.params = {}
   if (Object.prototype.toString.call(option) === '[object Object]') {
@@ -46,8 +55,8 @@ const popupDialog = function (option) {
     }, 200)
   }
 
-  this.container.addEventListener('webkitTransitionEnd', this.containerHandler)
-  this.container.addEventListener('transitionend', this.containerHandler)
+  this.container && this.container.addEventListener('webkitTransitionEnd', this.containerHandler)
+  this.container && this.container.addEventListener('transitionend', this.containerHandler)
 }
 
 popupDialog.prototype.onClickMask = function () {
@@ -57,7 +66,7 @@ popupDialog.prototype.onClickMask = function () {
 popupDialog.prototype._bindEvents = function () {
   if (this.params.hideOnBlur) {
     this.mask.addEventListener('click', this.onClickMask.bind(this), false)
-    this.mask.addEventListener('touchmove', e => e.preventDefault(), false)
+    this.mask.addEventListener('touchmove', e => e.preventDefault(), passiveSupported ? {passive: false} : false)
   }
 }
 
@@ -68,7 +77,9 @@ popupDialog.prototype.show = function () {
   }
   this.container.classList.add('vux-popup-show')
   this.params.onOpen && this.params.onOpen(this)
-  window.__$vuxPopups[this.uuid] = 1
+  if (isBrowser) {
+    window.__$vuxPopups[this.uuid] = 1
+  }
 }
 
 popupDialog.prototype.hide = function (shouldCallback = true) {
@@ -81,7 +92,9 @@ popupDialog.prototype.hide = function (shouldCallback = true) {
   }
   shouldCallback === false && this.params.onClose && this.params.hideOnBlur && this.params.onClose(this)
   this.isShow = false
-  delete window.__$vuxPopups[this.uuid]
+  if (isBrowser) {
+    delete window.__$vuxPopups[this.uuid]
+  }
 }
 
 popupDialog.prototype.destroy = function () {
@@ -94,7 +107,9 @@ popupDialog.prototype.destroy = function () {
   }
   this.container.removeEventListener('webkitTransitionEnd', this.containerHandler)
   this.container.removeEventListener('transitionend', this.containerHandler)
-  delete window.__$vuxPopups[this.uuid]
+  if (isBrowser) {
+    delete window.__$vuxPopups[this.uuid]
+  }
 }
 
 export default popupDialog

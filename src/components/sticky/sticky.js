@@ -34,18 +34,32 @@ export default function (nav, options = {}) {
   }
 
   let navOffsetY = nav.offsetTop - offset
+  scrollBox.removeEventListener('scroll', scrollBox.e)
 
   const getTop = function () {
     if (scrollBox === window) {
-      return document.documentElement.scrollTop
+      return (document.documentElement && document.documentElement.scrollTop) || document.body.scrollTop
     } else {
       return scrollBox.scrollTop
     }
   }
 
+  const getFillElem = function (el) {
+    let next = el.nextSibling
+    // 寻找最近的一个兄弟元素
+    while (next.nodeType !== 1) {
+      next = next.nextSibling
+    }
+    if (next.classList.contains('vux-sticky-fill')) {
+      return next
+    }
+    // 没有使用vux-sticky-fill按照之前的方式获取外层容器
+    return el.parentNode
+  }
+
   const scrollHandler = function () {
     const distance = getTop()
-    if (distance >= navOffsetY) {
+    if (distance > navOffsetY) {
       nav.style.top = offset + 'px'
       nav.classList.add('vux-fixed')
     } else {
@@ -54,12 +68,20 @@ export default function (nav, options = {}) {
   }
 
   if (checkStickySupport && (gtIOS6() || isSupportSticky())) {
+    nav.style.top = offset + 'px'
     // 大于等于iOS6版本使用sticky
     nav.classList.add('vux-sticky')
   } else {
-    setTimeout(() => {
+    if (nav.classList.contains('vux-fixed')) {
+      const top = getTop()
+      navOffsetY = getFillElem(nav).offsetTop - offset
+      if (top < navOffsetY) {
+        nav.classList.remove('vux-fixed')
+      }
+    } else {
       navOffsetY = nav.offsetTop - offset
-      scrollBox.addEventListener('scroll', scrollHandler)
-    }, 1000)
+    }
+    scrollBox.e = scrollHandler
+    scrollBox.addEventListener('scroll', scrollHandler)
   }
 }

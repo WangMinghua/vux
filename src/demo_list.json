@@ -72,7 +72,6 @@
   "Group",
   "ViewBox",
   "Home#/",
-  "Donate#/project/donate",
   "Demo#/demo",
   "FormatTime",
   "Uploader",
@@ -105,5 +104,12 @@
   "InlineCalendarEachDaySlot#/demo/inline-calendar-each-day-slot",
   "CheckIcon",
   "Drawer",
-  "DatetimeView"
+  "DatetimeView",
+  "InlineXNumber",
+  "PopupHeader",
+  "InlineCalendarMulti#/demo/inline-calendar-multi",
+  "XImgPopup#/demo/x-img-popup",
+  "WeekCalendar",
+  "NumberRoller",
+  "IconLoading"
 ]

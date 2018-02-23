@@ -22,7 +22,7 @@
 
     <group title="slot:each-item">
       <radio :options="radio001">
-        <template scope="props" slot="each-item">
+        <template slot-scope="props" slot="each-item"><!-- use scope="props" when vue < 2.5.0 -->
           <p>
             V{{ props.index + 1 }} <img src="http://dn-placeholder.qbox.me/110x110/FF2D55/000" class="vux-radio-icon"> {{ props.label }}
           </p>
@@ -62,8 +62,8 @@ export default {
     }
   },
   methods: {
-    change (value) {
-      console.log('change:', value)
+    change (value, label) {
+      console.log('change:', value, label)
     }
   }
 }

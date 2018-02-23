@@ -2,8 +2,8 @@
   <div>
     <group title="single column" label-width="5em">
       <popup-picker :title="title1" :data="list1" v-model="value1" @on-show="onShow" @on-hide="onHide" @on-change="onChange" :placeholder="$t('please select')"></popup-picker>
-      <popup-picker :title="title1" :data="list1" v-model="value1_1" @on-show="onShow" @on-hide="onHide" @on-change="onChange" :placeholder="$t('please select')">
-        <template slot="title" scope="props">
+      <popup-picker :popup-title="$t('please select')" :title="title1" :data="list1" v-model="value1_1" @on-show="onShow" @on-hide="onHide" @on-change="onChange" :placeholder="$t('please select')">
+        <template slot="title" slot-scope="props"><!-- use scope="props" when vue < 2.5.0 -->
           <span :class="props.labelClass" :style="props.labelStyle" style="height:24px;">
             <span class="demo-icon demo-icon-big" style="font-size:20px;vertical-align:middle;"></span>
             <span style="vertical-align:middle;">手机</span>
@@ -39,7 +39,7 @@
        <x-button @click.native="showPopupPicker = true" type="primary">Show PopupPicker. value: {{value5 }}</x-button>
      </div>
      <group>
-       <popup-picker :show="showPopupPicker" :show-cell="false" title="TEST" :data="[['1', '2', '3', '4', '5']]" v-model="value5" @on-hide="showPopupPicker=false"></popup-picker>
+       <popup-picker :show.sync="showPopupPicker" :show-cell="false" title="TEST" :data="[['1', '2', '3', '4', '5']]" v-model="value5"></popup-picker>
      </group>
 
      <br>
